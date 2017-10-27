@@ -7,7 +7,7 @@ using CppAD::AD;
 
 // TODO: Set the timestep length and duration
 size_t N = 25;
-double dt = 0.05;
+double dt = 0.03;
 
 // This value assumes the model presented in the classroom is used.
 //
@@ -23,7 +23,7 @@ const double Lf = 2.67;
 
 // NOTE: feel free to play around with this
 // or do something completely different
-double ref_v = 60;
+double ref_v = 70;
 
 // The solver takes all the state variables and actuator
 // variables in a singular vector. Thus, we should to establish

@@ -14,10 +14,12 @@ The state vector in MPC model has positios x and y, velocity and orientation ang
 as well as cross track error and orientation error.
 
 MPC model consists of the following updates:
+
+
 ![alt text][image1]
 
 with the following constraints for orientation and acceleration:
-[-1.0; 1.0]
+```[-1.0; 1.0]```
 
 Reference state cost model in this MPC implementatin looks like this:
 ```

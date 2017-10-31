@@ -17,7 +17,7 @@ with the following constraints for orientation and acceleration:
 [-1.0; 1.0]
 
 Reference state cost model in this MPC implementatin looks like this:
-
+```
     // Reference State Cost
     // The part of the cost based on the reference state.
     for (int t = 0; t < N; t++) {
@@ -37,7 +37,7 @@ Reference state cost model in this MPC implementatin looks like this:
       fg[0] += 10000*CppAD::pow(vars[delta_start + t + 1] - vars[delta_start + t], 2);
       fg[0] += 5*CppAD::pow(vars[a_start + t + 1] - vars[a_start + t], 2);
     }
-
+```
 and is roughly composed of the following components:
  - cross track and orientation errors
  - actuator's impact

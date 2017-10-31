@@ -10,7 +10,7 @@
 
 ### Discussion
 
-The state vector in MPC model has positios x and y, velocity and orientation angle
+The state vector in MPC model has positions x, y, velocity and orientation angle
 as well as cross track error and orientation error.
 
 MPC model consists of the following updates:

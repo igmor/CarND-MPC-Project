@@ -56,7 +56,3 @@ and take into account turns and in general sense any envoromental changes. N nee
 to be able to collect enough samples to reasonably predict future car trajectory and at the same
 time not to be too computentionally costly as MPC model scales with the number of parameters in the model
 which is N.
-
-
----
-

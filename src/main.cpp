@@ -17,6 +17,9 @@ constexpr double pi() { return M_PI; }
 double deg2rad(double x) { return x * pi() / 180; }
 double rad2deg(double x) { return x * 180 / pi(); }
 
+const double LATENCY = 0.1;
+const double Lf = 2.67;
+
 // Checks if the SocketIO event has JSON data.
 // If there is data the JSON object in string format will be returned,
 // else the empty string "" will be returned.
@@ -91,6 +94,8 @@ int main() {
           double py = j[1]["y"];
           double psi = j[1]["psi"];
           double v = j[1]["speed"];
+          double a = j[1]["throttle"];
+          double delta = -double(j[1]["steering_angle"]);
 
           /*
           * TODO: Calculate steering angle and throttle using MPC.
@@ -104,18 +109,18 @@ int main() {
           xvals << ptsx[0], ptsx[1];
           yvals << ptsy[0], ptsy[1];
 
-	  for (int i = 0; i < ptsx.size(); i++)
+          for (int i = 0; i < ptsx.size(); i++)
 	      {
-		  double sx = ptsx[i] - px;
-		  double sy = ptsy[i] - py;
+              double sx = ptsx[i] - px;
+              double sy = ptsy[i] - py;
 
-		  ptsx[i] = sx*cos(0-psi) - sy*sin(0-psi);
-		  ptsy[i] = sx*sin(0-psi) + sy*cos(0-psi);
+              ptsx[i] = sx*cos(0-psi) - sy*sin(0-psi);
+              ptsy[i] = sx*sin(0-psi) + sy*cos(0-psi);
 				  
 	      }
 
-	  Eigen::Map<Eigen::VectorXd> ptsxt(&ptsx[0], 6);
-	  Eigen::Map<Eigen::VectorXd> ptsyt(&ptsy[0], 6);
+          Eigen::Map<Eigen::VectorXd> ptsxt(&ptsx[0], 6);
+          Eigen::Map<Eigen::VectorXd> ptsyt(&ptsy[0], 6);
 
           auto coeffs  = polyfit(ptsxt,ptsyt,3);
 
@@ -124,8 +129,18 @@ int main() {
           // TODO: calculate the orientation error
           double epsi = -atan(coeffs[1]);
 
+          //to convert miles per hour to meter per second, and you should convert ref_v too
+          v*=0.44704;
+          psi = delta;
+          px = v*cos(psi)*LATENCY; 
+          py = v*sin(psi)*LATENCY;
+          psi = psi + v/Lf*delta*LATENCY;
+          cte = cte + v*sin(epsi)*LATENCY;
+          epsi = epsi + v/Lf*delta*LATENCY;
+          v = v + a*LATENCY;
+
           Eigen::VectorXd state(6);
-          state << 0, 0, 0, v, cte, epsi;
+          state << px, py, psi, v, cte, epsi;
 
           auto vars = mpc.Solve(state, coeffs);
           
@@ -144,7 +159,7 @@ int main() {
 
           //.. add (x,y) points to list here, points are in reference to the vehicle's coordinate system
           // the points in the simulator are connected by a Green line
-	  for (int i = 2; i < 25; i+=2) {
+	  for (int i = 2; i < 10; i+=2) {
 	      mpc_x_vals.push_back(vars[2+i]);
 	      mpc_y_vals.push_back(vars[2+i+1]);
 	  }
@@ -177,7 +192,7 @@ int main() {
           //
           // NOTE: REMEMBER TO SET THIS TO 100 MILLISECONDS BEFORE
           // SUBMITTING.
-          this_thread::sleep_for(chrono::milliseconds(100));
+          this_thread::sleep_for(chrono::milliseconds(int(LATENCY*1000)));
           ws.send(msg.data(), msg.length(), uWS::OpCode::TEXT);
         }
       } else {

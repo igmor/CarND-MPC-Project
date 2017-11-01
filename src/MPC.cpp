@@ -191,8 +191,8 @@ vector<double> MPC::Solve(Eigen::VectorXd state, Eigen::VectorXd coeffs) {
   // degrees (values in radians).
   // NOTE: Feel free to change this to something else.
   for (int i = delta_start; i < a_start; i++) {
-      vars_lowerbound[i] = -1.0;
-      vars_upperbound[i] = 1.0;
+      vars_lowerbound[i] = -0.4363;
+      vars_upperbound[i] = 0.4363;
   }
 
   // Acceleration/decceleration upper and lower limits.

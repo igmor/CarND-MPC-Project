@@ -28,19 +28,19 @@ Reference state cost model in this MPC implementatin looks like this:
     for (int t = 0; t < N; t++) {
       fg[0] += CppAD::pow(vars[cte_start + t], 2);
       fg[0] += CppAD::pow(vars[epsi_start + t], 2);
-      fg[0] += 5*CppAD::pow(vars[v_start + t] - ref_v, 2);
+      fg[0] += CppAD::pow(vars[v_start + t] - ref_v, 2);
     }
 
     // Minimize the use of actuators.
     for (int t = 0; t < N - 1; t++) {
-      fg[0] += 5000*CppAD::pow(vars[delta_start + t], 2);
-      fg[0] += 100*CppAD::pow(vars[a_start + t], 2);
+      fg[0] += 1000*CppAD::pow(vars[delta_start + t], 2);
+      fg[0] += CppAD::pow(vars[a_start + t], 2);
     }
 
     // Minimize the value gap between sequential actuations.
     for (int t = 0; t < N - 2; t++) {
-      fg[0] += 10000*CppAD::pow(vars[delta_start + t + 1] - vars[delta_start + t], 2);
-      fg[0] += 5*CppAD::pow(vars[a_start + t + 1] - vars[a_start + t], 2);
+      fg[0] += 1000*CppAD::pow(vars[delta_start + t + 1] - vars[delta_start + t], 2);
+      fg[0] += CppAD::pow(vars[a_start + t + 1] - vars[a_start + t], 2);
     }
 ```
 and is roughly composed of the following components:
@@ -48,13 +48,29 @@ and is roughly composed of the following components:
  - actuator's impact
  - relative cost of consequtive actuators updates.
 
-I experiemntally found cost values that worked fine in this particular implementation:
-5 for velocity reference, 5000 for stearing angle actuation impact, 100 for accelration
-impact, 10000 for sequential stearing angle updates, 5 for sequential accelaration updates.
+I experimentally found cost values that worked fine in this particular implementation:
+1000 for stearing angle actuation impact, 1000 for sequential stearing angle update.
 
-I also set hyperparameters N and dt to 25 and 0.03. dt Needs to be frequent enough to accomodate
+I also set hyperparameters N and dt to 10 and 0.1. dt Needs to be frequent enough to accomodate
 for timely actuators changes that would be adequate for steering the car in the right direction
 and take into account turns and in general sense any envoromental changes. N needs to be long enough
 to be able to collect enough samples to reasonably predict future car trajectory and at the same
 time not to be too computentionally costly as MPC model scales with the number of parameters in the model
 which is N.
+
+Before sending a state vector to a solver I also adjusted it for 100ms latency:
+```
+          v*=0.44704;
+          psi = delta;
+          px = v*cos(psi)*LATENCY; 
+          py = v*sin(psi)*LATENCY;
+          psi = psi + v/Lf*delta*LATENCY;
+          cte = cte + v*sin(epsi)*LATENCY;
+          epsi = epsi + v/Lf*delta*LATENCY;
+          v = v + a*LATENCY;
+
+          Eigen::VectorXd state(6);
+          state << px, py, psi, v, cte, epsi;
+```
+
+That helped to improve stability of a trajectory and get maximum speed up to 72 mph.

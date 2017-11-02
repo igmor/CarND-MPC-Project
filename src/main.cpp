@@ -110,14 +110,13 @@ int main() {
           yvals << ptsy[0], ptsy[1];
 
           for (int i = 0; i < ptsx.size(); i++)
-	      {
+	  {
               double sx = ptsx[i] - px;
               double sy = ptsy[i] - py;
 
               ptsx[i] = sx*cos(0-psi) - sy*sin(0-psi);
-              ptsy[i] = sx*sin(0-psi) + sy*cos(0-psi);
-				  
-	      }
+              ptsy[i] = sx*sin(0-psi) + sy*cos(0-psi);				  
+	  }
 
           Eigen::Map<Eigen::VectorXd> ptsxt(&ptsx[0], 6);
           Eigen::Map<Eigen::VectorXd> ptsyt(&ptsy[0], 6);
@@ -132,8 +131,8 @@ int main() {
           //to convert miles per hour to meter per second, and you should convert ref_v too
           v*=0.44704;
           psi = delta;
-          px = v*cos(psi)*LATENCY; 
-          py = v*sin(psi)*LATENCY;
+          px = v*LATENCY; 
+          py = 0.0;
           psi = psi + v/Lf*delta*LATENCY;
           cte = cte + v*sin(epsi)*LATENCY;
           epsi = epsi + v/Lf*delta*LATENCY;

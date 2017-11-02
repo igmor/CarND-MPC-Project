@@ -27,20 +27,20 @@ Reference state cost model in this MPC implementatin looks like this:
     // The part of the cost based on the reference state.
     for (int t = 0; t < N; t++) {
       fg[0] += CppAD::pow(vars[cte_start + t], 2);
-      fg[0] += CppAD::pow(vars[epsi_start + t], 2);
+      fg[0] += 5*CppAD::pow(vars[epsi_start + t], 2);
       fg[0] += CppAD::pow(vars[v_start + t] - ref_v, 2);
     }
 
     // Minimize the use of actuators.
     for (int t = 0; t < N - 1; t++) {
-      fg[0] += 1000*CppAD::pow(vars[delta_start + t], 2);
+      fg[0] += 30*CppAD::pow(vars[delta_start + t], 2);
       fg[0] += CppAD::pow(vars[a_start + t], 2);
     }
 
     // Minimize the value gap between sequential actuations.
     for (int t = 0; t < N - 2; t++) {
-      fg[0] += 1000*CppAD::pow(vars[delta_start + t + 1] - vars[delta_start + t], 2);
-      fg[0] += CppAD::pow(vars[a_start + t + 1] - vars[a_start + t], 2);
+      fg[0] += 3000*CppAD::pow(vars[delta_start + t + 1] - vars[delta_start + t], 2);
+      fg[0] += 5*CppAD::pow(vars[a_start + t + 1] - vars[a_start + t], 2);
     }
 ```
 and is roughly composed of the following components:
@@ -49,7 +49,9 @@ and is roughly composed of the following components:
  - relative cost of consequtive actuators updates.
 
 I experimentally found cost values that worked fine in this particular implementation:
-1000 for stearing angle actuation impact, 1000 for sequential stearing angle update.
+30 for stearing angle actuation impact, 3000 for sequential stearing angle update,
+5 for orientation error's impact to steer the car into a direction of driving and
+5 for sequential accelration update.
 
 I also set hyperparameters N and dt to 10 and 0.1. dt Needs to be frequent enough to accomodate
 for timely actuators changes that would be adequate for steering the car in the right direction
@@ -73,4 +75,16 @@ Before sending a state vector to a solver I also adjusted it for 100ms latency:
           state << px, py, psi, v, cte, epsi;
 ```
 
+Car's waypoint went through preprocessing step as well and were converted from global map
+into a car's coordinates using rotational transformation:
+```
+          for (int i = 0; i < ptsx.size(); i++)
+	  {
+              double sx = ptsx[i] - px;
+              double sy = ptsy[i] - py;
+
+              ptsx[i] = sx*cos(0-psi) - sy*sin(0-psi);
+              ptsy[i] = sx*sin(0-psi) + sy*cos(0-psi);				  
+	  }
+```
 That helped to improve stability of a trajectory and get maximum speed up to 72 mph.
